@@ -54,7 +54,7 @@ module Clockwork
       @block.call(@job, @last)
     rescue => e
       @manager.log_error e
-      @manager.handle_error e
+      @manager.handle_error e, job
     end
 
     def elapsed_ready(t)
