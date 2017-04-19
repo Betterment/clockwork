@@ -85,8 +85,8 @@ module Clockwork
       config[:logger].error(e)
     end
 
-    def handle_error(e)
-      error_handler.call(e) if error_handler
+    def handle_error(e, job)
+      error_handler.call(e, job) if error_handler
     end
 
     def log(msg)
