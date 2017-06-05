@@ -1,9 +1,11 @@
 require 'logger'
-require 'active_support/time'
+require 'active_support/core_ext/time'
+require 'active_support/core_ext/numeric/time'
 
 require 'clockwork/at'
 require 'clockwork/event'
 require 'clockwork/manager'
+require 'clockwork/active_record'
 
 module Clockwork
   class << self

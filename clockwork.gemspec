@@ -17,12 +17,15 @@ Gem::Specification.new do |s|
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ["lib"]
 
-  s.add_dependency(%q<tzinfo>)
-  s.add_dependency(%q<activesupport>)
+  s.add_dependency("activerecord", [">= 3.0", "< 5.0"])
+  s.add_dependency("activesupport")
 
   s.add_development_dependency "bundler", "~> 1.3"
   s.add_development_dependency "rake"
   s.add_development_dependency "daemons"
   s.add_development_dependency "minitest", "~> 5.8"
   s.add_development_dependency "mocha"
+  s.add_development_dependency "sqlite3", '~> 1.3'
+  s.add_development_dependency "timecop"
+  s.add_development_dependency "pry"
 end
