@@ -1,5 +1,4 @@
 require 'logger'
-require 'active_support/core_ext/time'
 require 'active_support/core_ext/numeric/time'
 
 require 'clockwork/at'

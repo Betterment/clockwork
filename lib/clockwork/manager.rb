@@ -21,11 +21,10 @@ module Clockwork
       if config[:sleep_timeout] < 1
         config[:logger].warn 'sleep_timeout must be >= 1 second'
       end
-      Time.zone = config[:time_zone]
     end
 
     def default_configuration
-      { :sleep_timeout => 1, :logger => Logger.new(STDOUT), :thread => false, :max_threads => 10, :time_zone => 'UTC' }
+      { :sleep_timeout => 1, :logger => Logger.new(STDOUT), :thread => false, :max_threads => 10 }
     end
 
     def handler(&block)

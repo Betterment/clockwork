@@ -1,4 +1,5 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
+require 'active_support/core_ext/time'
 require 'minitest/autorun'
 require 'mocha/setup'
 require 'timecop'
@@ -7,10 +8,10 @@ require 'pry'
 describe Clockwork do
   before do
     @log_output = StringIO.new
+    Time.zone = 'Eastern Time (US & Canada)'
     Clockwork.configure do |config|
       config[:sleep_timeout] = 0
       config[:logger] = Logger.new(@log_output)
-      config[:time_zone] = 'Eastern Time (US & Canada)'
     end
 
     ActiveRecord::Base.establish_connection(
