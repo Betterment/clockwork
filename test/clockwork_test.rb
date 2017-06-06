@@ -1,5 +1,5 @@
 require File.expand_path('../../lib/clockwork', __FILE__)
-require 'active_support/core_ext/time'
+require 'active_support/time'
 require 'minitest/autorun'
 require 'mocha/setup'
 require 'timecop'
