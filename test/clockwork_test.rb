@@ -22,7 +22,7 @@ describe Clockwork do
     ActiveRecord::Schema.define do
       self.verbose = false
 
-      create_table :clockwork_ticks, :force => true do |t|
+      create_table :clockwork_ticks, force: true do |t|
         t.datetime :processed_at, null: false
       end
     end
