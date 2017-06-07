@@ -7,12 +7,8 @@ module Clockwork
 
       def self.with_last_processed_tick
         transaction do
-          last_processed_tick = lock.last
-          if last_processed_tick.nil?
-            raise 'Could not determine the last processed tick'
-          else
-            yield(last_processed_tick.processed_at)
-          end
+          last_processed_tick = lock.last!
+          yield(last_processed_tick.processed_at)
         end
       end
 
