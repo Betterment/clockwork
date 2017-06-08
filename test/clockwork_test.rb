@@ -44,7 +44,7 @@ describe Clockwork do
       Clockwork.every(1.minute, 'myjob')
       Clockwork.manager.expects(:loop).yields.then.returns
 
-      assert_raises(RuntimeError, 'Could not determine the last processed tick') { Clockwork.run }
+      assert_raises(ActiveRecord::RecordNotFound) { Clockwork.run }
       refute run
     end
   end
