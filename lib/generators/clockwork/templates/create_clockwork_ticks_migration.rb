@@ -1,13 +1,12 @@
 class CreateClockworkTicks < ActiveRecord::Migration
-  class ClockworkTick < ActiveRecord::Base; end
-
   def self.up
     create_table :clockwork_ticks, force: true do |table|
       table.datetime :processed_at, null: false
+      table.boolean :unique, null: false, default: true
       table.timestamps null: false
     end
 
-    ClockworkTick.create!(processed_at: Time.zone.now.beginning_of_minute)
+    add_index :clockwork_ticks, :unique, unique: true
   end
 
   def self.down

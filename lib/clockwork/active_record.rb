@@ -7,8 +7,12 @@ module Clockwork
 
       def self.with_last_processed_tick
         transaction do
-          last_processed_tick = lock.last!
-          yield(last_processed_tick.processed_at)
+          last_processed_tick = lock.last
+          if last_processed_tick.nil?
+            create!(processed_at: Time.zone.now.beginning_of_minute)
+          else
+            yield(last_processed_tick.processed_at)
+          end
         end
       end
 

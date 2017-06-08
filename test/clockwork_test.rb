@@ -36,16 +36,23 @@ describe Clockwork do
   end
 
   describe 'when there are no recorded runs' do
-    it 'should raise an error' do
+    it 'creates the first recorded run and sets the processed_at to the beginning of the current minute' do
       run = false
       Clockwork.handler do |job|
         run = job == 'myjob'
       end
       Clockwork.every(1.minute, 'myjob')
-      Clockwork.manager.expects(:loop).yields.then.returns
+      Clockwork.manager.expects(:loop).times(2).yields.then.returns
+      Clockwork.run
 
-      assert_raises(ActiveRecord::RecordNotFound) { Clockwork.run }
       refute run
+      assert_equal Time.zone.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
+
+      Timecop.freeze(Time.zone.parse("2015-05-01 10:01:01"))
+      Clockwork.run
+
+      assert run
+      assert_equal Time.zone.parse("2015-05-01 10:01:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
     end
   end
 
