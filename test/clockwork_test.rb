@@ -8,7 +8,6 @@ require 'pry'
 describe Clockwork do
   before do
     @log_output = StringIO.new
-    Time.zone = 'Eastern Time (US & Canada)'
     Clockwork.configure do |config|
       config[:sleep_timeout] = 0
       config[:logger] = Logger.new(@log_output)
@@ -27,7 +26,7 @@ describe Clockwork do
       end
     end
 
-    Timecop.freeze(Time.zone.parse("2015-05-01 10:00:30"))
+    Timecop.freeze(Time.parse("2015-05-01 10:00:30"))
   end
 
   after do
@@ -46,19 +45,19 @@ describe Clockwork do
       Clockwork.run
 
       refute run
-      assert_equal Time.zone.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
+      assert_equal Time.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
 
-      Timecop.freeze(Time.zone.parse("2015-05-01 10:01:01"))
+      Timecop.freeze(Time.parse("2015-05-01 10:01:01"))
       Clockwork.run
 
       assert run
-      assert_equal Time.zone.parse("2015-05-01 10:01:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
+      assert_equal Time.parse("2015-05-01 10:01:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
     end
   end
 
   describe 'when it has been less than a minute since the last recorded run' do
     before do
-      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.zone.parse('2015-05-01 10:00:00'))
+      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.parse('2015-05-01 10:00:00'))
     end
 
     it 'should not execute any handlers' do
@@ -76,7 +75,7 @@ describe Clockwork do
 
   describe 'when it has been more than a minute since the last recorded run' do
     before do
-      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.zone.parse('2015-05-01 09:58:00'))
+      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.parse('2015-05-01 09:58:00'))
     end
 
     it 'should execute events and warn about the missing tick' do
@@ -90,13 +89,13 @@ describe Clockwork do
 
       assert run
       assert @log_output.string.include?('More than 120 seconds has elapsed between recorded ticks')
-      assert_equal Time.zone.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
+      assert_equal Time.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
     end
   end
 
   describe 'when there are multiple processes running' do
     before do
-      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.zone.parse('2015-05-01 09:59:00'))
+      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.parse('2015-05-01 09:59:00'))
     end
 
     it 'should only execute the handler once' do
@@ -109,13 +108,13 @@ describe Clockwork do
       3.times { Clockwork.run }
 
       assert_equal 1, run_count
-      assert_equal Time.zone.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
+      assert_equal Time.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
     end
   end
 
   describe 'when it has been one minute since the last recorded run' do
     before do
-      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.zone.parse('2015-05-01 09:59:00'))
+      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.parse('2015-05-01 09:59:00'))
     end
 
     it 'should run events with configured logger' do
@@ -185,7 +184,7 @@ describe Clockwork do
       Clockwork.run
 
       assert run
-      assert_equal Time.zone.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
+      assert_equal Time.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
     end
 
     it 'support module re-open style' do

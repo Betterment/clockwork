@@ -2,10 +2,10 @@ require File.expand_path('../../lib/clockwork', __FILE__)
 require 'active_support/time'
 require 'minitest/autorun'
 require 'timecop'
+require 'pry'
 
 describe Clockwork::ActiveRecord::Tick do
   before do
-    Time.zone = 'Eastern Time (US & Canada)'
     ActiveRecord::Base.establish_connection(
       :adapter => 'sqlite3',
       :database => ':memory:'
@@ -19,7 +19,7 @@ describe Clockwork::ActiveRecord::Tick do
       end
     end
 
-    Timecop.freeze(Time.zone.parse("2015-05-01 10:00:30"))
+    Timecop.freeze(Time.parse("2015-05-01 10:00:30"))
   end
 
   after do
@@ -37,13 +37,13 @@ describe Clockwork::ActiveRecord::Tick do
 
       tick = Clockwork::ActiveRecord::Tick.last
       refute tick.nil?
-      assert_equal Time.zone.parse("2015-05-01 10:00:00").utc, tick.processed_at
+      assert_equal Time.parse("2015-05-01 10:00:00"), tick.processed_at
     end
   end
 
   describe 'when the existing tick was processed less than a minute ago' do
     before do
-      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.zone.parse('2015-05-01 10:00:00'))
+      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.parse("2015-05-01 10:00:00"))
     end
 
     it 'does not yield or update the existing tick' do
@@ -53,13 +53,13 @@ describe Clockwork::ActiveRecord::Tick do
       end
 
       refute run
-      assert_equal Time.zone.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
+      assert_equal Time.parse("2015-05-01 10:00:00"), Clockwork::ActiveRecord::Tick.last.processed_at
     end
   end
 
   describe 'when the existing tick was processed more than a minute ago' do
     before do
-      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.zone.parse('2015-05-01 09:00:00'))
+      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.parse("2015-05-01 09:00:00"))
     end
 
     it 'yields and updates the existing tick' do
@@ -69,7 +69,7 @@ describe Clockwork::ActiveRecord::Tick do
       end
 
       assert run
-      assert_equal Time.zone.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
+      assert_equal Time.parse("2015-05-01 10:00:00"), Clockwork::ActiveRecord::Tick.last.processed_at
     end
   end
 end
