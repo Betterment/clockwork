@@ -89,7 +89,7 @@ describe Clockwork do
       Clockwork.run
 
       assert run
-      assert @log_output.string.include?('More than 1 minute has elapsed between recorded ticks')
+      assert @log_output.string.include?('More than 120 seconds has elapsed between recorded ticks')
       assert_equal Time.zone.parse("2015-05-01 10:00:00").utc, Clockwork::ActiveRecord::Tick.last.processed_at
     end
   end
