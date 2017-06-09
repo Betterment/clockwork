@@ -62,19 +62,12 @@ module Clockwork
     def run
       log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
       loop do
-        current_minute = Time.zone.now.beginning_of_minute
-
-        Clockwork::ActiveRecord::Tick.with_last_processed_tick do |last_processed_minute|
-          elapsed_timespan = current_minute - last_processed_minute
-
-          if elapsed_timespan >= 1.minute
-            if elapsed_timespan > 1.minute
-              config[:logger].warn "More than 1 minute has elapsed between recorded ticks. Last processed tick: #{last_processed_minute}, current tick: #{current_minute}"
-            end
-
-            tick(current_minute)
-            Clockwork::ActiveRecord::Tick.processed(current_minute)
+        Clockwork::ActiveRecord::Tick.process_tick do |current_minute, last_processed_minute|
+          if current_minute - last_processed_minute > 1.minute
+            config[:logger].warn "More than 1 minute has elapsed between recorded ticks. Last processed tick: #{last_processed_minute}, current tick: #{current_minute}"
           end
+
+          tick(current_minute)
         end
 
         interval = config[:sleep_timeout] - Time.now.subsec + 0.001
