@@ -59,7 +59,7 @@ describe Clockwork::ActiveRecord::Tick do
 
   describe 'when the existing tick was processed more than a minute ago' do
     before do
-      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.parse("2015-05-01 09:00:00"))
+      Clockwork::ActiveRecord::Tick.create!(processed_at: Time.parse("2015-05-01 09:58:00"))
     end
 
     it 'yields and updates the existing tick' do
