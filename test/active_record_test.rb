@@ -7,8 +7,8 @@ require 'pry'
 describe Clockwork::ActiveRecord::Tick do
   before do
     ActiveRecord::Base.establish_connection(
-      :adapter => 'sqlite3',
-      :database => ':memory:'
+      adapter: 'sqlite3',
+      database: ':memory:'
     )
 
     ActiveRecord::Schema.define do
