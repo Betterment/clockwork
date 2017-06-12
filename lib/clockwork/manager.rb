@@ -17,6 +17,7 @@ module Clockwork
 
     def configure
       yield(config)
+
       if config[:sleep_timeout] < 1
         config[:logger].warn 'sleep_timeout must be >= 1 second'
       end
@@ -61,7 +62,15 @@ module Clockwork
     def run
       log "Starting clock for #{@events.size} events: [ #{@events.map(&:to_s).join(' ')} ]"
       loop do
-        tick
+        Clockwork::ActiveRecord::Tick.process_tick do |current_minute, last_processed_minute|
+          elapsed = current_minute - last_processed_minute
+          if elapsed > Clockwork::ActiveRecord::Tick::TIME_INTERVAL
+            config[:logger].warn "More than #{elapsed.to_i} seconds has elapsed between recorded ticks. Last processed tick: #{last_processed_minute}, current tick: #{current_minute}"
+          end
+
+          tick(current_minute)
+        end
+
         interval = config[:sleep_timeout] - Time.now.subsec + 0.001
         sleep(interval) if interval > 0
       end
