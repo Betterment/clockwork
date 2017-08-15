@@ -1,5 +1,6 @@
 pkg
 tmp
-/.bundle
+.bundle
 Gemfile.lock
+*.gemfile.lock
 .ruby-version

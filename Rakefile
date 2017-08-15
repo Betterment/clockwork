@@ -6,4 +6,10 @@ Rake::TestTask.new do |t|
   t.verbose = false
 end
 
-task :default => :test
+if ENV['APPRAISAL_INITIALIZED'] || ENV['TRAVIS']
+  task default: :test
+else
+  require 'appraisal'
+  Appraisal::Task.new
+  task default: :appraisal
+end
