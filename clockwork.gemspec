@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ["lib"]
 
-  s.add_dependency "activerecord", [">= 3.0", "< 5.2"]
+  s.add_dependency "activerecord", [">= 3.0", "< 5.3"]
   s.add_dependency "activesupport", ">= 4.0"
 
   s.add_development_dependency 'appraisal', '~> 2.2.0'
@@ -26,7 +26,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "daemons"
   s.add_development_dependency "minitest", "~> 5.8"
   s.add_development_dependency "mocha"
-  s.add_development_dependency "sqlite3", '~> 1.3'
   s.add_development_dependency "timecop"
   s.add_development_dependency "pry"
 end
