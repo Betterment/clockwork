@@ -167,23 +167,23 @@ describe Clockwork::Manager do
     it "once a day at 16:20" do
       @manager.every(1.day, 'myjob', :at => '16:20')
 
-      assert_wont_run 'jan 1 2010 16:19:59'
+      assert_wont_run 'jan 1 2010 16:19:00'
       assert_will_run 'jan 1 2010 16:20:00'
-      assert_wont_run 'jan 1 2010 16:20:01'
-      assert_wont_run 'jan 2 2010 16:19:59'
+      assert_wont_run 'jan 1 2010 16:21:00'
+      assert_wont_run 'jan 2 2010 16:19:00'
       assert_will_run 'jan 2 2010 16:20:00'
     end
 
     it "twice a day at 16:20 and 18:10" do
       @manager.every(1.day, 'myjob', :at => ['16:20', '18:10'])
 
-      assert_wont_run 'jan 1 2010 16:19:59'
+      assert_wont_run 'jan 1 2010 16:19:00'
       assert_will_run 'jan 1 2010 16:20:00'
-      assert_wont_run 'jan 1 2010 16:20:01'
+      assert_wont_run 'jan 1 2010 16:21:00'
 
-      assert_wont_run 'jan 1 2010 18:09:59'
+      assert_wont_run 'jan 1 2010 18:09:00'
       assert_will_run 'jan 1 2010 18:10:00'
-      assert_wont_run 'jan 1 2010 18:10:01'
+      assert_wont_run 'jan 1 2010 18:11:00'
     end
   end
 

@@ -167,8 +167,9 @@ describe Clockwork::DatabaseEvents::Synchronizer do
           DatabaseEventModel.create(:frequency => 1.day, :at => next_minute(@now).strftime('%H:%M'))
           setup_sync(model: DatabaseEventModel, :every => @sync_frequency, :events_run => @events_run)
 
-          # tick from now, though specified :at time
-          tick_at(@now, :and_every_second_for => (2 * @sync_frequency) + 1.second)
+          tick_at(@now)
+          tick_at(next_minute(@now))
+          tick_at(next_minute(next_minute(@now)))
 
           assert_equal 1, @events_run.length
         end
@@ -180,7 +181,9 @@ describe Clockwork::DatabaseEvents::Synchronizer do
           setup_sync(model: DatabaseEventModelWithoutName, :every => @sync_frequency, :events_run => @events_run)
 
           # tick from now, though specified :at time
-          tick_at(@now, :and_every_second_for => (2 * @sync_frequency) + 1.second)
+          tick_at(@now)
+          tick_at(next_minute(@now))
+          tick_at(next_minute(next_minute(@now)))
 
           assert_equal 1, @events_run.length
         end
@@ -192,13 +195,13 @@ describe Clockwork::DatabaseEvents::Synchronizer do
 
         tick_at @now, :and_every_second_for => 1.second
 
-        assert_wont_run 'jan 1 2010 16:19:59'
+        assert_wont_run 'jan 1 2010 16:19:00'
         assert_will_run 'jan 1 2010 16:20:00'
-        assert_wont_run 'jan 1 2010 16:20:01'
+        assert_wont_run 'jan 1 2010 16:21:00'
 
-        assert_wont_run 'jan 1 2010 18:09:59'
+        assert_wont_run 'jan 1 2010 18:09:00'
         assert_will_run 'jan 1 2010 18:10:00'
-        assert_wont_run 'jan 1 2010 18:10:01'
+        assert_wont_run 'jan 1 2010 18:11:00'
       end
 
       it 'allows syncing multiple database models' do
@@ -281,7 +284,7 @@ describe Clockwork::DatabaseEvents::Synchronizer do
 
       it 'runs the event based on America/Montreal tz' do
         begin
-          tick_at(@utc_time_now, :and_every_second_for => 5.hours)
+          tick_at(@utc_time_now, :and_every_minute_for => 5.hours)
         rescue
         end
         assert_equal 1, @events_run.length

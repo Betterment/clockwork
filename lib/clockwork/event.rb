@@ -21,7 +21,12 @@ module Clockwork
 
     def run_now?(t)
       t = convert_timezone(t)
-      elapsed_ready(t) and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
+      
+      if @at.nil?
+        elapsed_ready(t) and (@if.nil? or @if.call(t))
+      else
+        @at.ready?(t) and (@if.nil? or @if.call(t))
+      end
     end
 
     def thread?

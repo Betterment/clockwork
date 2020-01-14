@@ -21,8 +21,16 @@ end
 
 def tick_at(now = Time.now, options = {})
   seconds_to_tick_for = options[:and_every_second_for] || 0
-  number_of_ticks = 1 + seconds_to_tick_for
-  number_of_ticks.times{|i| @manager.tick(now + i) }
+  minutes_to_tick_for = options[:and_every_minute_for] || 0
+  if seconds_to_tick_for > 0
+    number_of_ticks = 1 + seconds_to_tick_for
+    number_of_ticks.times{|i| @manager.tick(now + i) }
+  elsif minutes_to_tick_for > 0
+    number_of_ticks = 1 + (minutes_to_tick_for.to_i / 60)
+    number_of_ticks.times{|i| @manager.tick(now + i*60) }
+  else
+    @manager.tick(now)
+  end
 end
 
 def next_minute(now = Time.now)
