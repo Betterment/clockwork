@@ -167,7 +167,7 @@ describe Clockwork do
     end
 
     it 'should pass all arguments to every' do
-      Clockwork.every(1.second, 'myjob', if: lambda { |_| false }) {  }
+      Clockwork.every(1.minute, 'myjob', if: lambda { |_| false }) {  }
       Clockwork.manager.expects(:loop).yields.then.returns
       Clockwork.run
       assert @log_output.string.include?('1 events')
@@ -190,7 +190,7 @@ describe Clockwork do
     it 'support module re-open style' do
       $called = false
       module ::Clockwork
-        every(1.second, 'myjob') { $called = true }
+        every(1.minute, 'myjob') { $called = true }
       end
       Clockwork.manager.expects(:loop).yields.then.returns
       Clockwork.run

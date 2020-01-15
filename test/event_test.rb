@@ -13,12 +13,12 @@ describe Clockwork::Event do
       end
 
       it 'is true' do
-        event = Clockwork::Event.new(@manager, nil, nil, nil)
+        event = Clockwork::Event.new(@manager, 1.minute, nil, nil)
         assert_equal true, event.thread?
       end
 
       it 'is false when event thread option set' do
-        event = Clockwork::Event.new(@manager, nil, nil, nil, :thread => false)
+        event = Clockwork::Event.new(@manager, 1.minute, nil, nil, :thread => false)
         assert_equal false, event.thread?
       end
     end
@@ -29,7 +29,7 @@ describe Clockwork::Event do
       end
 
       it 'is true if event thread option is true' do
-        event = Clockwork::Event.new(@manager, nil, nil, nil, :thread => true)
+        event = Clockwork::Event.new(@manager, 1.minute, nil, nil, :thread => true)
         assert_equal true, event.thread?
       end
     end

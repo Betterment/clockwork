@@ -4,8 +4,13 @@ def setup_sync(options={})
   model_class = options.fetch(:model) { raise KeyError, ":model must be set to the model class" }
   frequency = options.fetch(:every) { raise KeyError, ":every must be set to the database sync frequency" }
   events_run = options.fetch(:events_run) { raise KeyError, ":events_run must be provided"}
+  setup_options = {
+    model: model_class,
+    every: frequency
+  }
+  setup_options[:at] = options[:at] if options[:at]
 
-  Clockwork::DatabaseEvents::Synchronizer.setup model: model_class, every: frequency do |model|
+  Clockwork::DatabaseEvents::Synchronizer.setup setup_options do |model|
     name = model.respond_to?(:name) ? model.name : model.to_s
     events_run << name
   end
@@ -20,17 +25,11 @@ def assert_wont_run(t)
 end
 
 def tick_at(now = Time.now, options = {})
-  seconds_to_tick_for = options[:and_every_second_for] || 0
   minutes_to_tick_for = options[:and_every_minute_for] || 0
-  if seconds_to_tick_for > 0
-    number_of_ticks = 1 + seconds_to_tick_for
-    number_of_ticks.times{|i| @manager.tick(now + i) }
-  elsif minutes_to_tick_for > 0
-    number_of_ticks = 1 + (minutes_to_tick_for.to_i / 60)
-    number_of_ticks.times{|i| @manager.tick(now + i*60) }
-  else
-    @manager.tick(now)
-  end
+  
+  number_of_ticks = 1 + (minutes_to_tick_for.to_i / 60)
+  
+  number_of_ticks.times{|i| @manager.tick(now + i*60) }
 end
 
 def next_minute(now = Time.now)
