@@ -64,6 +64,7 @@ describe Clockwork::Event do
 
     describe 'during daylight savings' do
       before do
+        Time.zone = 'Eastern Time (US & Canada)'
         @manager.stubs(:config).returns(tz: 'Eastern Time (US & Canada)')
         @manager.stubs(:log).returns(nil)
         @event = Clockwork::Event.new(@manager, 1.day, nil, ->(_) { }, at: '16:00')
@@ -71,11 +72,11 @@ describe Clockwork::Event do
 
       it 'runs at specified time' do
         Timecop.freeze(Time.parse('2019-03-09')) do
-          @event.run(Time.parse('16:00'))
+          @event.run(Time.zone.parse('16:00'))
         end
 
         Timecop.freeze(Time.parse('2019-03-10')) do
-          assert_equal true, @event.run_now?(Time.parse('16:00'))
+          assert_equal true, @event.run_now?(Time.zone.parse('16:00'))
         end
       end
     end
