@@ -28,9 +28,7 @@ module Clockwork
   #   puts "Running #{job}, at #{time}"
   # end
 
-  every(10.seconds, 'frequent.job')
-  every(3.minutes, 'less.frequent.job')
-  every(1.hour, 'hourly.job')
+  every(1.minute, 'frequent.job')
 
   every(1.day, 'midnight.job', :at => '00:00')
 end
@@ -84,7 +82,7 @@ require 'stalker'
 module Clockwork
   handler { |job| Stalker.enqueue(job) }
 
-  every(1.hour, 'feeds.refresh')
+  every(1.minute, 'feeds.refresh')
   every(1.day, 'reminders.send', :at => '01:30')
 end
 ```
@@ -99,7 +97,7 @@ enqueue methods.  For example, with DJ/Rails:
 require 'config/boot'
 require 'config/environment'
 
-every(1.hour, 'feeds.refresh') { Feed.send_later(:refresh) }
+every(1.minute, 'feeds.refresh') { Feed.send_later(:refresh) }
 every(1.day, 'reminders.send', :at => '01:30') { Reminder.send_later(:send_reminders) }
 ```
 
@@ -135,8 +133,8 @@ every(1.day, 'reminders.send', :at => '1:30')
 Wildcards for hour and minute are supported:
 
 ```ruby
-every(1.hour, 'reminders.send', :at => '**:30')
-every(10.seconds, 'frequent.job', :at => '9:**')
+every(1.day, 'reminders.send', :at => '**:30')
+every(1.minute, 'frequent.job', :at => '9:**')
 ```
 
 You can set more than one timing:
@@ -149,7 +147,7 @@ every(1.day, 'reminders.send', :at => ['12:00', '18:00'])
 You can specify the day of week to run:
 
 ```ruby
-every(1.week, 'myjob', :at => 'Monday 16:20')
+every(1.day, 'myjob', :at => 'Monday 16:20')
 ```
 
 If another task is already running at the specified time, clockwork will skip execution of the task with the `:at` option.
@@ -173,7 +171,7 @@ return value is true.
 Run on every first day of month.
 
 ```ruby
-Clockwork.every(1.day, 'myjob', :if => lambda { |t| t.day == 1 })
+Clockwork.every(1.minute, 'myjob', :if => lambda { |t| t.day == 1 })
 ```
 
 The argument is an instance of `ActiveSupport::TimeWithZone` if the `:tz` option is set. Otherwise, it's an instance of `Time`.
@@ -181,7 +179,7 @@ The argument is an instance of `ActiveSupport::TimeWithZone` if the `:tz` option
 This argument cannot be omitted.  Please use _ as placeholder if not needed.
 
 ```ruby
-Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
+Clockwork.every(1.minute, 'myjob', :if => lambda { |_| true })
 ```
 
 ### :thread
@@ -292,8 +290,8 @@ through to your queueing system.
 The second part of the file, which lists the events, roughly resembles a crontab:
 
 ```ruby
-every(5.minutes, 'thing.do')
-every(1.hour, 'otherthing.do')
+every(1.minute, 'thing.do')
+every(1.day, 'otherthing.do', at: '16:00')
 ```
 
 In the first line of this example, an event will be triggered once every five
@@ -306,7 +304,7 @@ need not define a general event handler, and instead provide one with each
 event:
 
 ```ruby
-every(5.minutes, 'thing.do') { Thing.send_later(:do) }
+every(1.minute, 'thing.do') { Thing.send_later(:do) }
 ```
 
 If you provide a custom handler for the block, the job name is used only for
@@ -315,7 +313,7 @@ logging.
 You can also use blocks to do more complex checks:
 
 ```ruby
-every(1.day, 'check.leap.year') do
+every(1.day, 'check.leap.year', at: '01:00') do
   Stalker.enqueue('leap.year.party') if Date.leap?(Time.now.year)
 end
 ```
@@ -333,16 +331,6 @@ on(:after_tick) do
   puts "tock"
 end
 ```
-
-Finally, you can use tasks synchronised from a database as described in detail above:
-
-```ruby
-sync_database_events model: MyEvent, every: 1.minute do |instance_job_name|
-  # what to do with each instance
-end
-```
-
-You can use multiple `sync_database_events` if you wish, so long as you use different model classes for each (ActiveRecord Single Table Inheritance could be a good idea if you're doing this).
 
 In production
 -------------
