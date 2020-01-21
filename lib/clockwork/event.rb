@@ -1,14 +1,14 @@
 module Clockwork
   class Event
-    attr_accessor :job, :last
+    attr_accessor :job
 
     def initialize(manager, period, job, block, options={})
       validate_if_option(options[:if])
+      validate_period_and_at(period, options[:at])
       @manager = manager
       @period = period
       @job = job
       @at = At.parse(options[:at])
-      @last = nil
       @block = block
       @if = options[:if]
       @thread = options.fetch(:thread, @manager.config[:thread])
@@ -21,7 +21,8 @@ module Clockwork
 
     def run_now?(t)
       t = convert_timezone(t)
-      elapsed_ready(t) and (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
+
+      (@at.nil? || @at.ready?(t)) && (@if.nil? || @if.call(t))
     end
 
     def thread?
@@ -30,7 +31,6 @@ module Clockwork
 
     def run(t)
       @manager.log "Triggering '#{self}'"
-      @last = convert_timezone(t)
       if thread?
         if @manager.thread_available?
           t = Thread.new do
@@ -52,19 +52,25 @@ module Clockwork
     private
 
     def execute
-      @block.call(@job, @last)
+      @block.call(@job)
     rescue => e
       @manager.log_error e
       @manager.handle_error e, job
     end
 
-    def elapsed_ready(t)
-      @last.nil? || (t - @last.to_i).to_i >= @period
-    end
-
     def validate_if_option(if_option)
       if if_option && !if_option.respond_to?(:call)
         raise ArgumentError.new(':if expects a callable object, but #{if_option} does not respond to call')
+      end
+    end
+
+    def validate_period_and_at(period, at)
+      if period == 1.day
+        raise ArgumentError.new('must supply :at for daily events') if at.nil?
+      elsif period == 1.minute
+        raise ArgumentError.new('must not supply :at for minute events') if at.present?
+      else
+        raise ArgumentError.new('period must either be 1.day or 1.minute')
       end
     end
   end

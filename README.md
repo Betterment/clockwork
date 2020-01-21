@@ -28,9 +28,7 @@ module Clockwork
   #   puts "Running #{job}, at #{time}"
   # end
 
-  every(10.seconds, 'frequent.job')
-  every(3.minutes, 'less.frequent.job')
-  every(1.hour, 'hourly.job')
+  every(1.minute, 'frequent.job')
 
   every(1.day, 'midnight.job', :at => '00:00')
 end
@@ -84,7 +82,7 @@ require 'stalker'
 module Clockwork
   handler { |job| Stalker.enqueue(job) }
 
-  every(1.hour, 'feeds.refresh')
+  every(1.minute, 'feeds.refresh')
   every(1.day, 'reminders.send', :at => '01:30')
 end
 ```
@@ -99,125 +97,8 @@ enqueue methods.  For example, with DJ/Rails:
 require 'config/boot'
 require 'config/environment'
 
-every(1.hour, 'feeds.refresh') { Feed.send_later(:refresh) }
+every(1.minute, 'feeds.refresh') { Feed.send_later(:refresh) }
 every(1.day, 'reminders.send', :at => '01:30') { Reminder.send_later(:send_reminders) }
-```
-
-Use with database events
------------------------
-
-In addition to managing static events in your `clock.rb`, you can configure clockwork to synchronise with dynamic events from a database. Like static events, these database-backed events say when they should be run, and how frequently; the difference being that if you change those settings in the database, they will be reflected in clockwork.
-
-To keep the database events in sync with clockwork, a special manager class `DatabaseEvents::Manager` is used. You tell it to sync a database-backed model using the `sync_database_events` method, and then, at the frequency you specify, it will fetch all the events from the database, and ensure clockwork is using the latest settings.
-
-### Example `clock.rb` file
-
-Here we're using an `ActiveRecord` model called `ClockworkDatabaseEvent` to store events in the database:
-
-```ruby
-require 'clockwork'
-require 'clockwork/database_events'
-require_relative './config/boot'
-require_relative './config/environment'
-
-module Clockwork
-
-  # required to enable database syncing support
-  Clockwork.manager = DatabaseEvents::Manager.new
-
-  sync_database_events model: ClockworkDatabaseEvent, every: 1.minute do |model_instance|
-
-    # do some work e.g...
-
-    # running a DelayedJob task, where #some_action is a method
-    # you've defined on the model, which does the work you need
-    model_instance.delay.some_action
-
-    # performing some work with Sidekiq
-    YourSidekiqWorkerClass.perform_async
-  end
-
-  [other events if you have]
-
-end
-```
-
-This tells clockwork to fetch all `ClockworkDatabaseEvent` instances from the database, creating an internal clockwork event for each one, configured based on the instance's `frequency`, `at` and optionally `name` and `tz` methods. It also says to reload the events from the database every `1.minute`; we need pick up any changes in the database frequently (choose a sensible reload frequency by changing the `every:` option).
-
-When one of the events is ready to be run (based on it's `frequency`, `at` and possible `tz` methods), clockwork arranges for the block passed to `sync_database_events` to be run. The above example shows how you could use either DelayedJob or Sidekiq to simply kick off a worker job. This approach is good because the ideal is to use clockwork as a simple scheduler, and avoid making it carry out any long-running tasks.
-
-### Your Model Classes
-
-`ActiveRecord` models are a perfect candidate for the model class. Having said that, the only requirements are:
-
-  1. the class responds to `all` returning an array of instances from the database
-
-  2. the instances returned respond to:
-
-    - `id` returning a unique identifier (this is needed to track changes to event settings)
-
-    - `frequency` returning the how frequently (in seconds) the database event should be run
-
-    - `at` return nil or `''` if not using `:at`, or otherwise any acceptable clockwork `:at` string
-
-    - (optionally) `name` returning the name for the event (used to identify it in the Clcockwork output)
-
-    - (optionally) `tz` returning the timezone to use (default is the local timezone)
-
-#### Example Setup
-
-Here's an example of one way of setting up your ActiveRecord models:
-
-```ruby
-# db/migrate/20140302220659_create_frequency_periods.rb
-class CreateFrequencyPeriods < ActiveRecord::Migration
-  def change
-    create_table :frequency_periods do |t|
-      t.string :name
-
-      t.timestamps
-    end
-  end
-end
-
-# 20140302221102_create_clockwork_database_events.rb
-class CreateClockworkDatabaseEvents < ActiveRecord::Migration
-  def change
-    create_table :clockwork_database_events do |t|
-      t.integer :frequency_quantity
-      t.references :frequency_period
-      t.string :at
-
-      t.timestamps
-    end
-    add_index :clockwork_database_events, :frequency_period_id
-  end
-end
-
-# app/models/clockwork_database_event.rb
-class ClockworkDatabaseEvent < ActiveRecord::Base
-  belongs_to :frequency_period
-  attr_accessible :frequency_quantity, :frequency_period_id, :at
-
-  # Used by clockwork to schedule how frequently this event should be run
-  # Should be the intended number of seconds between executions
-  def frequency
-    frequency_quantity.send(frequency_period.name.pluralize)
-  end
-end
-
-# app/models/frequency_period.rb
-class FrequencyPeriod < ActiveRecord::Base
-  attr_accessible :name
-end
-
-# db/seeds.rb
-...
-# creating the FrequencyPeriods
-[:second, :minute, :hour, :day, :week, :month].each do |period|
-  FrequencyPeriod.create(name: period)
-end
-...
 ```
 
 Event Parameters
@@ -252,8 +133,8 @@ every(1.day, 'reminders.send', :at => '1:30')
 Wildcards for hour and minute are supported:
 
 ```ruby
-every(1.hour, 'reminders.send', :at => '**:30')
-every(10.seconds, 'frequent.job', :at => '9:**')
+every(1.day, 'reminders.send', :at => '**:30')
+every(1.minute, 'frequent.job', :at => '9:**')
 ```
 
 You can set more than one timing:
@@ -266,7 +147,7 @@ every(1.day, 'reminders.send', :at => ['12:00', '18:00'])
 You can specify the day of week to run:
 
 ```ruby
-every(1.week, 'myjob', :at => 'Monday 16:20')
+every(1.day, 'myjob', :at => 'Monday 16:20')
 ```
 
 If another task is already running at the specified time, clockwork will skip execution of the task with the `:at` option.
@@ -290,7 +171,7 @@ return value is true.
 Run on every first day of month.
 
 ```ruby
-Clockwork.every(1.day, 'myjob', :if => lambda { |t| t.day == 1 })
+Clockwork.every(1.minute, 'myjob', :if => lambda { |t| t.day == 1 })
 ```
 
 The argument is an instance of `ActiveSupport::TimeWithZone` if the `:tz` option is set. Otherwise, it's an instance of `Time`.
@@ -298,7 +179,7 @@ The argument is an instance of `ActiveSupport::TimeWithZone` if the `:tz` option
 This argument cannot be omitted.  Please use _ as placeholder if not needed.
 
 ```ruby
-Clockwork.every(1.second, 'myjob', :if => lambda { |_| true })
+Clockwork.every(1.minute, 'myjob', :if => lambda { |_| true })
 ```
 
 ### :thread
@@ -409,8 +290,8 @@ through to your queueing system.
 The second part of the file, which lists the events, roughly resembles a crontab:
 
 ```ruby
-every(5.minutes, 'thing.do')
-every(1.hour, 'otherthing.do')
+every(1.minute, 'thing.do')
+every(1.day, 'otherthing.do', at: '16:00')
 ```
 
 In the first line of this example, an event will be triggered once every five
@@ -423,7 +304,7 @@ need not define a general event handler, and instead provide one with each
 event:
 
 ```ruby
-every(5.minutes, 'thing.do') { Thing.send_later(:do) }
+every(1.minute, 'thing.do') { Thing.send_later(:do) }
 ```
 
 If you provide a custom handler for the block, the job name is used only for
@@ -432,7 +313,7 @@ logging.
 You can also use blocks to do more complex checks:
 
 ```ruby
-every(1.day, 'check.leap.year') do
+every(1.day, 'check.leap.year', at: '01:00') do
   Stalker.enqueue('leap.year.party') if Date.leap?(Time.now.year)
 end
 ```
@@ -450,16 +331,6 @@ on(:after_tick) do
   puts "tock"
 end
 ```
-
-Finally, you can use tasks synchronised from a database as described in detail above:
-
-```ruby
-sync_database_events model: MyEvent, every: 1.minute do |instance_job_name|
-  # what to do with each instance
-end
-```
-
-You can use multiple `sync_database_events` if you wish, so long as you use different model classes for each (ActiveRecord Single Table Inheritance could be a good idea if you're doing this).
 
 In production
 -------------

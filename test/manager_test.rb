@@ -31,40 +31,8 @@ describe Clockwork::Manager do
     @manager.every(1.minute, 'myjob')
 
     assert_will_run(t=Time.now)
-    assert_wont_run(t+30)
+    assert_will_run(t+30)
     assert_will_run(t+60)
-  end
-
-  it "every three minutes" do
-    @manager.every(3.minutes, 'myjob')
-
-    assert_will_run(t=Time.now)
-    assert_wont_run(t+2*60)
-    assert_will_run(t+3*60)
-  end
-
-  it "once an hour" do
-    @manager.every(1.hour, 'myjob')
-
-    assert_will_run(t=Time.now)
-    assert_wont_run(t+30*60)
-    assert_will_run(t+60*60)
-  end
-
-  it "once a week" do
-    @manager.every(1.week, 'myjob')
-
-    assert_will_run(t=Time.now)
-    assert_wont_run(t+60*60*24*6)
-    assert_will_run(t+60*60*24*7)
-  end
-
-  it "won't drift later and later" do
-    @manager.every(1.hour, 'myjob')
-
-    assert_will_run(Time.parse("10:00:00.5"))
-    assert_wont_run(Time.parse("10:59:59.999"))
-    assert_will_run(Time.parse("11:00:00.0"))
   end
 
   it "aborts when no handler defined" do
@@ -96,23 +64,6 @@ describe Clockwork::Manager do
     assert_equal 2, $set_me
   end
 
-  it "should pass time to the general handler" do
-    received = nil
-    now = Time.now
-    @manager.handler { |job, time| received = time }
-    @manager.every(1.minute, 'myjob')
-    @manager.tick(now)
-    assert_equal now, received
-  end
-
-  it "should pass time to the event-specific handler" do
-    received = nil
-    now = Time.now
-    @manager.every(1.minute, 'myjob') { |job, time| received = time }
-    @manager.tick(now)
-    assert_equal now, received
-  end
-
   it "exceptions are trapped and logged" do
     @manager.handler { raise 'boom' }
     @manager.every(1.minute, 'myjob')
@@ -122,14 +73,6 @@ describe Clockwork::Manager do
     @manager.configure { |c| c[:logger] = mocked_logger }
     @manager.tick(Time.now)
     mocked_logger.verify
-  end
-
-  it "exceptions still set the last timestamp to avoid spastic error loops" do
-    @manager.handler { raise 'boom' }
-    event = @manager.every(1.minute, 'myjob')
-    @manager.stubs(:log_error)
-    @manager.tick(t = Time.now)
-    assert_equal t, event.last
   end
 
   it "should be configurable" do
@@ -167,23 +110,23 @@ describe Clockwork::Manager do
     it "once a day at 16:20" do
       @manager.every(1.day, 'myjob', :at => '16:20')
 
-      assert_wont_run 'jan 1 2010 16:19:59'
+      assert_wont_run 'jan 1 2010 16:19:00'
       assert_will_run 'jan 1 2010 16:20:00'
-      assert_wont_run 'jan 1 2010 16:20:01'
-      assert_wont_run 'jan 2 2010 16:19:59'
+      assert_wont_run 'jan 1 2010 16:21:00'
+      assert_wont_run 'jan 2 2010 16:19:00'
       assert_will_run 'jan 2 2010 16:20:00'
     end
 
     it "twice a day at 16:20 and 18:10" do
       @manager.every(1.day, 'myjob', :at => ['16:20', '18:10'])
 
-      assert_wont_run 'jan 1 2010 16:19:59'
+      assert_wont_run 'jan 1 2010 16:19:00'
       assert_will_run 'jan 1 2010 16:20:00'
-      assert_wont_run 'jan 1 2010 16:20:01'
+      assert_wont_run 'jan 1 2010 16:21:00'
 
-      assert_wont_run 'jan 1 2010 18:09:59'
+      assert_wont_run 'jan 1 2010 18:09:00'
       assert_will_run 'jan 1 2010 18:10:00'
-      assert_wont_run 'jan 1 2010 18:10:01'
+      assert_wont_run 'jan 1 2010 18:11:00'
     end
   end
 
@@ -227,19 +170,19 @@ describe Clockwork::Manager do
 
   describe ':if option' do
     it ":if true then always run" do
-      @manager.every(1.second, 'myjob', :if => lambda { |_| true })
+      @manager.every(1.minute, 'myjob', :if => lambda { |_| true })
 
       assert_will_run 'jan 1 2010 16:20:00'
     end
 
     it ":if false then never run" do
-      @manager.every(1.second, 'myjob', :if => lambda { |_| false })
+      @manager.every(1.minute, 'myjob', :if => lambda { |_| false })
 
       assert_wont_run 'jan 1 2010 16:20:00'
     end
 
     it ":if the first day of month" do
-      @manager.every(1.second, 'myjob', :if => lambda { |t| t.day == 1 })
+      @manager.every(1.minute, 'myjob', :if => lambda { |t| t.day == 1 })
 
       assert_will_run 'jan 1 2010 16:20:00'
       assert_wont_run 'jan 2 2010 16:20:00'
@@ -249,7 +192,7 @@ describe Clockwork::Manager do
     it ":if it is compared to a time with zone" do
       tz = 'America/Chicago'
       time = Time.utc(2012,5,25,10,00)
-      @manager.every(1.second, 'myjob', tz: tz, :if => lambda  { |t|
+      @manager.every(1.minute, 'myjob', tz: tz, :if => lambda  { |t|
             ((time - 1.hour)..(time + 1.hour)).cover? t
             })
       assert_will_run time
@@ -257,7 +200,7 @@ describe Clockwork::Manager do
 
     it ":if is not callable then raise ArgumentError" do
       assert_raises(ArgumentError) do
-        @manager.every(1.second, 'myjob', :if => true)
+        @manager.every(1.minute, 'myjob', :if => true)
       end
     end
   end
@@ -318,7 +261,7 @@ describe Clockwork::Manager do
       @manager.on(:before_tick) do
         false
       end
-      @manager.every(1.second, 'myjob') { raise "should not run" }
+      @manager.every(1.minute, 'myjob') { raise "should not run" }
       @manager.tick
     end
 
@@ -327,8 +270,8 @@ describe Clockwork::Manager do
       @manager.on(:before_run) do
         counter += 1
       end
-      @manager.every(1.second, 'myjob')
-      @manager.every(1.second, 'myjob2')
+      @manager.every(1.minute, 'myjob')
+      @manager.every(1.minute, 'myjob2')
       @manager.tick
       assert_equal 2, counter
     end
@@ -340,8 +283,8 @@ describe Clockwork::Manager do
         counter += 1
         counter % 2 == 0
       end
-      @manager.every(1.second, 'myjob') { raise "should not ran" }
-      @manager.every(1.second, 'myjob2') { ran = true }
+      @manager.every(1.minute, 'myjob') { raise "should not ran" }
+      @manager.every(1.minute, 'myjob2') { ran = true }
       @manager.tick
       assert ran
     end
@@ -351,8 +294,8 @@ describe Clockwork::Manager do
       @manager.on(:after_run) do
         counter += 1
       end
-      @manager.every(1.second, 'myjob')
-      @manager.every(1.second, 'myjob2')
+      @manager.every(1.minute, 'myjob')
+      @manager.every(1.minute, 'myjob2')
       @manager.tick
       assert_equal 2, counter
     end
@@ -379,7 +322,7 @@ describe Clockwork::Manager do
       @manager.configure do |config|
         config[:logger] = Logger.new(@string_io)
       end
-      @manager.every(1.second, 'myjob') { raise 'it error' }
+      @manager.every(1.minute, 'myjob') { raise 'it error' }
     end
 
     it 'registered error_handler handles error from event' do
