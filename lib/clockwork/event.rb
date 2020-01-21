@@ -22,7 +22,7 @@ module Clockwork
     def run_now?(t)
       t = convert_timezone(t)
 
-      (@at.nil? or @at.ready?(t)) and (@if.nil? or @if.call(t))
+      (@at.nil? || @at.ready?(t)) && (@if.nil? || @if.call(t))
     end
 
     def thread?
@@ -66,9 +66,9 @@ module Clockwork
 
     def validate_period_and_at(period, at)
       if period == 1.day
-        raise ArgumentError.new('must supply at for daily events') if at.nil?
+        raise ArgumentError.new('must supply :at for daily events') if at.nil?
       elsif period == 1.minute
-        raise ArgumentError.new('must not supply at for minute events') if at.present?
+        raise ArgumentError.new('must not supply :at for minute events') if at.present?
       else
         raise ArgumentError.new('period must either be 1.day or 1.minute')
       end
